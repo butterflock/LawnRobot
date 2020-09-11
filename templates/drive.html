@@ -1,0 +1,114 @@
+<html>
+<head>
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet"/>
+    <title>Lawn Robot</title>
+    <script src="{{ url_for('static', filename='socket.io.js') }}"></script>
+    <script type="text/javascript" charset="utf-8">
+        let socket = io({'reconnection': false})
+        socket.on('connect', function () {
+            socket.on('update', function (data) {
+                document.getElementById("camera").src = "data:image/jpeg;base64," + data["rgb"];
+                document.getElementById("seg").src = "data:image/jpeg;base64," + data["seg"];
+                document.getElementById("info_fps").innerHTML = "FPS: " + Number((data["fps"]).toFixed(1)) + "</br>Distance: " + Number(data["distance"]).toFixed(2) + "</br>Heading: " + data['heading'];
+
+                let info_drive = document.getElementById("info_drive");
+                if (!data["is_safe_to_drive"]) {
+                    info_drive.innerHTML = "⚠️ Safety Switch is triggered ⚠️"
+                } else {
+                    info_drive.innerHTML = data["automatic_drive_enabled"] ? "⚠️ Automatic Drive Active ⚠️</br>" + data["automatic_drive_message"] : ""
+                }
+            })
+        });
+    </script>
+    <script type="text/javascript" charset="utf-8">
+        setInterval(function () {
+            socket.emit("alive_signal")
+        }, 1000);
+    </script>
+
+    <script src="{{ url_for('static', filename='nipplejs.js') }}"></script>
+    <script>
+        window.onload = function () {
+            let speedControl = document.getElementById("speed_control");
+
+            padding = 0.5 * document.getElementsByClassName('container_joystick')[0].clientHeight;
+            let joystick = nipplejs.create({
+                zone: document.getElementsByClassName('container_joystick')[0],
+                mode: 'static',
+                position: {bottom: padding + "px", right: padding + "px"},
+                color: 'slategray'
+            });
+
+            joystick.on("move", function (event, data) {
+                let angle = (data.angle.degree + 270) % 360;
+
+                if (angle > 180) {
+                    angle = angle - 360
+                }
+                angle = -angle;
+
+                console.log(angle);
+                socket.emit("command_steer", angle);
+            });
+
+            joystick.on("start", function (event, data) {
+                console.log("active");
+                socket.emit("command_active", true);
+                buttonAutomaticDrive.hidden = false
+            });
+
+            joystick.on("end", function (event, data) {
+                console.log("inactive");
+                socket.emit("command_active", false);
+            });
+
+            speedControl.oninput = function () {
+                let speed = speedControl.value;
+                console.log(speed);
+                socket.emit("command_speed", speed);
+            };
+
+            let buttonAutomaticDrive = document.getElementById("automatic_drive")
+            buttonAutomaticDrive.onclick = function () {
+                socket.emit("command_start_automatic_drive")
+                buttonAutomaticDrive.hidden = true
+            }
+
+        };
+
+    </script>
+</head>
+<body>
+<div class="container">
+    <div class="container_camera">
+        <img id="camera" class="image">
+    </div>
+    <table class="container_info">
+        <tr class="image_infos">
+            <td>
+                <p id="info_fps">FPS: </p>
+                {% if recordings_dir %}
+                <a href="/{{recordings_dir}}">Download</a>
+                {% endif %}
+            </td>
+            <td>
+                <p id="info_drive">Drive Info</p>
+            </td>
+        </tr>
+
+    </table>
+    <div class="container_seg">
+        <img id="seg" class="image">
+    </div>
+    <div class="control">
+        <div class="container_slider">
+            <input id="speed_control" type="range" min="1" max="100" value="50" class="slider">
+        </div>
+        <div class="container_buttons">
+            <button id="automatic_drive" class="button" type="button">Automatic Drive</button>
+        </div>
+        <div class="container_joystick"></div>
+    </div>
+</div>
+</body>
+</html>

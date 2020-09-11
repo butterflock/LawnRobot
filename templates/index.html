@@ -1,0 +1,35 @@
+<html>
+<body>
+<h1>Lawn Robot</h1>
+<form action="/drive">
+    <label for="camera">Camera:</label>
+    <select name="camera" id="camera">
+        <option value="none">None</option>
+        <option selected="selected", value="pi">PiCam</option>
+        <option value="opencv">OpenCV</option>
+    </select>
+    <br>
+    <label for="model">Model:</label>
+    <select name="model" id="model">
+        {% for model in models %}
+        <option value="{{model}}">{{model}}</option>
+        {% endfor %}
+    </select>
+    <br>
+    <input type="checkbox" id="record" name="record" value="record">
+    <label for="record">Record</label><br>
+    <br><br>
+    <input type="submit" value="Drive">
+</form>
+
+<br>
+<br>
+
+<ul>
+    {% for recording in recordings %}
+    <li><a href="img/{{recording}}">{{recording}}</a></li>
+    {% endfor %}
+</ul>
+
+</body>
+</html>
