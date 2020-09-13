@@ -1,6 +1,6 @@
 # Smart Lawn Robot
 
-A smart robot lawn mower. The robot uses Machine Learning for navigation and grass detection. 
+A camera-based smart robot lawn mower. The robot uses Machine Learning for navigation and grass detection. 
 
 In contrast to most existing robot lawn mowers, this prototype does not require a perimeter wire and the robot can detect obstacles such as children or small animals (e.g. hedgehog) without even touching them.
 
